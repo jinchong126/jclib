@@ -19,7 +19,7 @@ struct rbtree_container
 };
 
 /*  rbtree root */
-struct rbtree_container_head
+struct rbtree_container_root
 {
 	struct rb_root rb_root;
 
@@ -30,9 +30,11 @@ struct rbtree_container_head
 	pthread_spinlock_t rbtree_container_lock;
 };
 
-int rbtree_contarner_init(rbtree_compare_cb compare_rbtree_cb);
-void *container_search(void *user_data);
-int container_insert(void *user_data, int rbtree_data_size);
-int container_delete(void *user_data);
+struct rbtree_container_root *rbtree_contarner_init(rbtree_compare_cb compare_rbtree_cb);
+void rbtree_contarner_deinit(struct rbtree_container_root *rbcr);
+void *container_search(struct rbtree_container_root *rbcr, void *user_data);
+int container_insert(struct rbtree_container_root *rbcr, void *user_data, int rbtree_data_size);
+int container_delete(struct rbtree_container_root *rbcr, void *user_data);
+void container_flush(struct rbtree_container_root *rbcr);
 
 #endif /* __RBTREE_COM_H__ */

@@ -9,9 +9,16 @@ struct lock_free_queue_node
 	struct lock_free_queue_node *next;
 };
 
-int lf_queue_init();
+struct lf_opt {
+    struct lock_free_queue_node *head;
+    struct lock_free_queue_node *tail;
+};
 
-int lf_queue_push(void *pdata);
+struct lf_opt *lf_queue_init();
 
-void *lf_queue_pop();
+void lf_queue_deinit(struct lf_opt *lf);
+
+int lf_queue_push(struct lf_opt *lf, void *pdata);
+
+void *lf_queue_pop(struct lf_opt *lf);
 #endif /*  LFQUEUE_H */

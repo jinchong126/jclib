@@ -4,31 +4,62 @@
 #include <stdlib.h>
 #include "lfqueue.h"
 
-struct lock_free_queue_node *g_lf_queue_head; /* queue head */
-struct lock_free_queue_node *g_lf_queue_tail; /* queue tail */
-
 /* init lock-free queue */
-int lf_queue_init()
+struct lf_opt *lf_queue_init()
 {
-	g_lf_queue_tail = NULL;
-	g_lf_queue_head = NULL;
+    struct lf_opt *lf;
+	lf = (struct lf_opt *)malloc(sizeof(struct lf_opt));
+	if (lf == NULL) {
+		printf("Malloc lock-free queue opt failure, Init error\n");
+		return NULL;
+    }
 
-	g_lf_queue_head = (struct lock_free_queue_node*)malloc(sizeof(struct lock_free_queue_node));
-	if (g_lf_queue_head == NULL)
+	lf->head = (struct lock_free_queue_node*)malloc(sizeof(struct lock_free_queue_node));
+	if (lf->head == NULL)
 	{
 		printf("Malloc lock-free queue node failure, Init error\n");
-		return -1;
+        free(lf);
+		return NULL;
 	}
 
 	/* set head and tail is not null */
-	g_lf_queue_head->data = NULL;
-	g_lf_queue_head->next = NULL;
-	g_lf_queue_tail = g_lf_queue_head;
+	lf->head->data = NULL;
+	lf->head->next = NULL;
+	lf->tail = lf->head;
 	return 0;
 }
 
+/* deinit lock-free queue */
+void lf_queue_deinit(struct lf_opt *lf)
+{
+	struct lock_free_queue_node *n, *p;
+
+    if (lf == NULL) {
+        return ;
+    }
+
+	n = lf->head;
+
+    while(n != lf->tail) {
+        if (n->data != NULL) {
+            free(n->data);
+            n->data = NULL;
+        }
+        p = n;
+        n = n->next;
+        free(p);
+    }
+
+    free(lf->head);
+    lf->head = NULL;
+
+    free(lf);
+    lf = NULL;
+	return ;
+}
+
 /* lock-free queue push packet */
-int lf_queue_push(void *pdata)
+int lf_queue_push(struct lf_opt *lf, void *pdata)
 {
 	/* init */
 	struct lock_free_queue_node* node  = NULL;
@@ -46,29 +77,29 @@ int lf_queue_push(void *pdata)
 	node->next = NULL;
 
 	/* inset tail */
-	tmp = g_lf_queue_tail;
-	g_lf_queue_tail = node;
+	tmp = lf->tail;
+	lf->tail = node;
 	tmp->next = node;
 	return 0;
 }
 
 /* lock-free queue push packet */
-void *lf_queue_pop()
+void *lf_queue_pop(struct lf_opt *lf)
 {
 	/* init result */
 	void *result = NULL;
-	struct lock_free_queue_node *node = g_lf_queue_head, *new;
+	struct lock_free_queue_node *node = lf->head, *new;
 
 	/* get data */
-	if (g_lf_queue_head->next != NULL)
+	if (lf->head->next != NULL)
 	{
-		g_lf_queue_head = g_lf_queue_head->next;
+		lf->head = lf->head->next;
 		result = node->data;
 
 		/* free node */
 		free(node);
 	} else {
-		if(g_lf_queue_head->data != NULL) {
+		if(lf->head->data != NULL) {
 			new = (struct lock_free_queue_node*)malloc(sizeof(struct lock_free_queue_node));
 			if (new == NULL)
 			{
@@ -79,8 +110,8 @@ void *lf_queue_pop()
 			new->data = NULL;
 			new->next = NULL;
 			/* get tail data and put null node */
-			g_lf_queue_head = new;
-			g_lf_queue_tail = new;
+			lf->head = new;
+			lf->tail = new;
 			result = node->data;
 			free(node);
 		}

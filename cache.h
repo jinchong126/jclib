@@ -10,15 +10,15 @@
 #define BIT(x) (1 << x)
 
 struct cache_store {
-	unsigned char *cache_head;	/* 0  */
-	int cache_state; /* 01010101 */
-	int cache_num;
+	unsigned char *data_head;	/* 0  */
+	int map; /* 01010101 */
+	int num;
 	pthread_spinlock_t cache_lock;
 };
 
-int cache_init();
-void *get_cache_store();
-int put_cache_store(void *cache_data_addr);
-int cache_destory();
-void *cache_malloc();
-int cache_free(void *cache_data_addr);
+struct cache_store *cache_init();
+void *get_cache_store(struct cache_store *cs);
+int put_cache_store(struct cache_store *cs, void *cache_data_addr);
+int cache_destory(struct cache_store *cs);
+void *cache_malloc(struct cache_store *cs);
+int cache_free(struct cache_store *cs, void *cache_data_addr);
